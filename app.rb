@@ -1,5 +1,6 @@
 require 'twitter'
 require 'dotenv'
+require './yuzu'
 
 Dotenv.load
 
@@ -10,4 +11,27 @@ client = Twitter::REST::Client.new do |config|
   config.access_token_secret = ENV['MY_ACCESS_TOKEN_SECRET'] #Access Token Secret
 end
 
-client.update("じゃっじゃ〜ん！")
+def get_new_mention_timeline(client, prev_check_time)
+  client.mentions_timeline.select{|t| t.created_at > prev_check_time}
+end
+
+interval = 3
+prev_check_time = Time.now.getutc - interval
+yuzu = Yuzu.new
+
+while true
+  p "さってと…#{prev_check_time + 60 * 60 * 9}からの新しいリプライなにか飛んで来てないかな〜？"
+
+  tweets = get_new_mention_timeline(client, prev_check_time)
+  prev_check_time = Time.now.getutc
+
+  tweets.each do |t|
+    options = {'in_reply_to_status_id' => t.id}
+    message = yuzu.reply_message(t)
+    p "#{t.user.name}[ID:#{t.user.screen_name}]#{t.text}(#{t.created_at})に対しての返信「#{message}」を#{prev_check_time}に行いました。"
+    client.update(message, options)
+  end
+
+  p "#{interval}秒後にまたチェックするよー"
+  sleep(interval)
+end
