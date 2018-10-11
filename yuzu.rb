@@ -21,12 +21,32 @@ class Yuzu
     Time.now.to_s.gsub(" +0900", "")
   end
 
+  def user_name
+    "yuzu_amechan"
+  end
+
+  def user_profile(client)
+    "@#{client.user.screen_name}こと#{client.user.name}登場! #{client.user.description} さっきまでは、#{client.user.location}"
+  end
+
   def login_message
-    "おっまたせ〜！ (#{current_jst_time})"
+    "おっまたせ〜！✌(#{current_jst_time})"
   end
 
   def logout_message
-    "しょぼ〜ん (#{current_jst_time})"
+    "しょぼ〜ん💔(#{current_jst_time})"
+  end
+
+  def login_status_message
+    "柚子、登場！☀(#{current_jst_time})"
+  end
+
+  def logout_status_separator
+    "💤"
+  end
+
+  def logout_status_message
+    "お布団の中#{logout_status_separator}(#{current_jst_time})"
   end
 
   def replace_command(message, tweet)
@@ -34,7 +54,7 @@ class Yuzu
   end
 
   def reply_message(tweet)
-    received_message = tweet.text.gsub("@yuzu_amechan","").strip
+    received_message = tweet.text.gsub("@#{user_name}","").strip
     base_message = reply_message_from_received_message(received_message)
     formatted_message = replace_command(base_message, tweet)
     "@#{tweet.user.screen_name} #{formatted_message}"
