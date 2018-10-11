@@ -20,20 +20,29 @@ end
 interval = (60 * 15 / 75) + 1
 prev_check_time = Time.now.getutc - interval
 yuzu = Yuzu.new
+login_message = yuzu.login_message
+client.update(login_message)
+p login_message
 
-while true
-  p "さってと…#{prev_check_time + 60 * 60 * 9}からの新しいリプライなにか飛んで来てないかな〜？"
+begin
+  while true
+    p "さってと…#{prev_check_time + 60 * 60 * 9}からの新しいリプライなにか飛んで来てないかな〜？"
 
-  tweets = get_new_mention_timeline(client, prev_check_time)
-  prev_check_time = Time.now.getutc
+    tweets = get_new_mention_timeline(client, prev_check_time)
+    prev_check_time = Time.now.getutc
 
-  tweets.each do |t|
-    options = {'in_reply_to_status_id' => t.id}
-    message = yuzu.reply_message(t)
-    p "#{t.user.name}[ID:#{t.user.screen_name}]#{t.text}(#{t.created_at})に対しての返信「#{message}」を#{prev_check_time}に行いました。"
-    client.update(message, options)
+    tweets.each do |t|
+      options = {'in_reply_to_status_id' => t.id}
+      message = yuzu.reply_message(t)
+      p "#{t.user.name}[ID:#{t.user.screen_name}]#{t.text}(#{t.created_at})に対しての返信「#{message}」を#{prev_check_time}に行いました。"
+      client.update(message, options)
+    end
+
+    p "#{interval}秒後にまたチェックするよー"
+    sleep(interval)
   end
-
-  p "#{interval}秒後にまたチェックするよー"
-  sleep(interval)
+ensure
+  logout_message = yuzu.logout_message
+  client.update(logout_message)
+  p logout_message
 end

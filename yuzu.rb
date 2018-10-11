@@ -1,5 +1,6 @@
 class Yuzu
   def initialize
+    ENV['TZ'] = 'Asia/Tokyo'
     @keywords = {}
     File.open("yuzu_keywords.txt", 'r') do |f|
       f.each_line do |line|
@@ -14,6 +15,18 @@ class Yuzu
         @fallback_words << line.chomp
       end
     end
+  end
+
+  def current_jst_time
+    Time.now.to_s.gsub(" +0900", "")
+  end
+
+  def login_message
+    "おっまたせ〜！ (#{current_jst_time})"
+  end
+
+  def logout_message
+    "しょぼ〜ん (#{current_jst_time})"
   end
 
   def replace_command(message, tweet)
@@ -37,6 +50,8 @@ end
 return unless $0 == __FILE__
 
 yuzu = Yuzu.new
+p yuzu.login_message
 received_message = ARGV[0]
 reply_message = yuzu.reply_message_from_received_message(received_message)
 p "#{received_message} -> #{reply_message}"
+p yuzu.logout_message
