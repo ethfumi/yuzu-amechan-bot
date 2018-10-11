@@ -29,7 +29,11 @@ last_logout_time = get_last_logout_time(client, yuzu).getutc
 login_message = yuzu.login_message
 client.update(login_message)
 p login_message
-client.update_profile({location: yuzu.login_status_message})
+client.update_profile({
+  name: yuzu.user_name_actived,
+  location: yuzu.login_status_message,
+  profile_link_color: yuzu.user_profile_link_color_actived
+})
 
 interval = (60 * 15 / 75) + 1
 prev_check_time = last_logout_time
@@ -55,5 +59,9 @@ ensure
   logout_message = yuzu.logout_message
   client.update(logout_message)
   p logout_message
-  client.update_profile({location: yuzu.logout_status_message})
+  client.update_profile({
+    name: yuzu.user_name_sleeped,
+    location: yuzu.logout_status_message,
+    profile_link_color: yuzu.user_profile_link_color_sleeped
+  })
 end

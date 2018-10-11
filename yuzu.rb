@@ -21,8 +21,24 @@ class Yuzu
     Time.now.to_s.gsub(" +0900", "")
   end
 
-  def user_name
+  def user_screen_name
     "yuzu_amechan"
+  end
+
+  def user_name_actived
+    "yuzu🍬"
+  end
+
+  def user_name_sleeped
+    "yuzu💤🍬"
+  end
+
+  def user_profile_link_color_actived
+    "#fdc823"
+  end
+
+  def user_profile_link_color_sleeped
+    "#f1c8d0"
   end
 
   def user_profile(client)
@@ -54,7 +70,7 @@ class Yuzu
   end
 
   def reply_message(tweet)
-    received_message = tweet.text.gsub("@#{user_name}","").strip
+    received_message = tweet.text.gsub("@#{user_screen_name}","").strip
     base_message = reply_message_from_received_message(received_message)
     formatted_message = replace_command(base_message, tweet)
     "@#{tweet.user.screen_name} #{formatted_message}"
