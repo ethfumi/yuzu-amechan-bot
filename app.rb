@@ -15,7 +15,9 @@ def get_new_mention_timeline(client, prev_check_time)
   client.mentions_timeline.select{|t| t.created_at > prev_check_time}
 end
 
-interval = 3
+# 15分に75回までの制約あり。余裕を持って+1秒してる
+# https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline.html
+interval = (60 * 15 / 75) + 1
 prev_check_time = Time.now.getutc - interval
 yuzu = Yuzu.new
 

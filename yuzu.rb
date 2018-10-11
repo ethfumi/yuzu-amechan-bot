@@ -17,7 +17,7 @@ class Yuzu
   end
 
   def replace_command(message, tweet)
-    message.gsub("</user_name>", "tweet.user.name")
+    message.gsub("</user_name>", tweet.user.name)
   end
 
   def reply_message(tweet)
