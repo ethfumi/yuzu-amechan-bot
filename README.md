@@ -18,3 +18,20 @@ https://trap.jp/post/458/
 を参考にherokuにdeployする
 
 お疲れ様でした🍬
+
+# herokuについて
+
+ログ見れないと落ちたときとか分からなくて不便
+
+herokuコマンド使えるようにする
+`brew install heroku/brew/heroku`
+https://devcenter.heroku.com/articles/heroku-cli
+
+herokuにログイン
+`heroku login`
+
+ログを垂れ流す
+`heroku logs -a アプリ名(例yuzu-amechan-bot) --tail`
+
+過去ログ見たい時(デフォルト100件で、1500件まで見れる)
+`heroku logs -a アプリ名(例yuzu-amechan-bot) -n 1500`
