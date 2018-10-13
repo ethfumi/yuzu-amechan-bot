@@ -73,8 +73,9 @@ class Yuzu
   end
 
   def reply_message_from_received_message(received_message)
-    # 部分一致とかも入れたほうが良いかもしれない
-    return @keywords[received_message] if @keywords.key?(received_message)
+    found_key = @keywords.keys.find{|key| received_message.include? key}
+    return @keywords[found_key] if found_key
+
     @fallback_words.sample
   end
 end
