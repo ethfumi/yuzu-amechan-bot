@@ -21,20 +21,20 @@ class Yuzu
     Time.now.to_s.gsub(" +0900", "")
   end
 
-  def user_name_actived
-    "yuzu🍬"
+  def profile_actived
+    {
+      name: "yuzu🍬",
+      location: "柚子、登場！☀(#{current_jst_time})",
+      profile_link_color: "#fdc823"
+    }
   end
 
-  def user_name_sleeped
-    "yuzu💤🍬"
-  end
-
-  def user_profile_link_color_actived
-    "#fdc823"
-  end
-
-  def user_profile_link_color_sleeped
-    "#f1c8d0"
+  def profile_sleeped
+    {
+      name: "yuzu💤🍬",
+      location: logout_status_message,
+      profile_link_color: "#f1c8d0"
+    }
   end
 
   def user_profile(client)
@@ -47,10 +47,6 @@ class Yuzu
 
   def logout_message
     "しょぼ〜ん💔(#{current_jst_time})"
-  end
-
-  def login_status_message
-    "柚子、登場！☀(#{current_jst_time})"
   end
 
   def logout_status_separator

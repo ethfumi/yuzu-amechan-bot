@@ -19,28 +19,31 @@ def get_last_logout_time(client, yuzu)
   Time.parse(client.user.location.split(yuzu.logout_status_separator)[1])
 end
 
-# 15分に75回までの制約あり。余裕を持って+1秒してる
-# https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline.html
+def utc_to_jst_message(time)
+  (time + 60 * 60 * 9).to_s.gsub(" UTC", "")
+end
+
+def tweet(client, message)
+  client.update(message)
+  p message
+end
+
 yuzu = Yuzu.new
 profile_text = yuzu.user_profile(client)
 p profile_text
 last_logout_time = get_last_logout_time(client, yuzu).getutc
-
-login_message = yuzu.login_message
-client.update(login_message)
-p login_message
-client.update_profile({
-  name: yuzu.user_name_actived,
-  location: yuzu.login_status_message,
-  profile_link_color: yuzu.user_profile_link_color_actived
-})
-
-interval = (60 * 15 / 75) + 1
 prev_check_time = last_logout_time
+
+tweet(client, yuzu.login_message)
+client.update_profile(yuzu.profile_actived)
+
+# 15分に75回までの制約あり。余裕を持って+1秒してる
+# https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline.html
+interval = (60 * 15 / 75) + 1
 
 begin
   while true
-    p "さってと… #{(prev_check_time + 60 * 60 * 9).to_s.gsub(" UTC", "")} からの新しいリプライなにか飛んで来てないかな〜？"
+    p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
 
     tweets = get_new_mention_timeline(client, prev_check_time)
     prev_check_time = Time.now.getutc
@@ -55,13 +58,13 @@ begin
     p "#{interval}秒後にまたチェックするよー"
     sleep(interval)
   end
+rescue Twitter::Error::TooManyRequests => e
+  tweet(client, "むぅ、電池が切れそう…#{utc_to_jst_message(e.rate_limit.reset_at)}までおやすみするねー")
+  client.update_profile(profile_sleeped)
+  sleep(e.rate_limit.reset_in)
+  client.update_profile(yuzu.profile_actived)
+  retry
 ensure
-  logout_message = yuzu.logout_message
-  client.update(logout_message)
-  p logout_message
-  client.update_profile({
-    name: yuzu.user_name_sleeped,
-    location: yuzu.logout_status_message,
-    profile_link_color: yuzu.user_profile_link_color_sleeped
-  })
+  tweet(client, yuzu.logout_message)
+  client.update_profile(profile_sleeped)
 end
