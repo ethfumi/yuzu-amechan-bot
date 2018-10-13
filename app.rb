@@ -17,30 +17,57 @@ end
 
 def get_last_logout_time(client, yuzu)
   Time.parse(client.user.location.split(yuzu.logout_status_separator)[1])
+rescue
+  Time.now
 end
 
-# 15分に75回までの制約あり。余裕を持って+1秒してる
-# https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline.html
+def utc_to_jst_message(time)
+  (time + 60 * 60 * 9).to_s.gsub(" UTC", "")
+end
+
+def tweet(client, message)
+  client.update(message)
+  p message
+end
+
+def send_dm_to_master(client, message)
+  send_dm(client, ENV['MASTER_SCREEN_NAME'], message)
+end
+
+def send_dm_self(client, message)
+  send_dm(client, client.user.screen_name, message)
+end
+
+def send_dm(client, target, message)
+  send_text = "#{message} #{utc_to_jst_message(Time.now.getutc)}"
+  # twitter-6.2.0/lib/twitter/rest/request.rb:81:in `fail_or_return_response_body': Sorry, that page does not exist. (Twitter::Error::NotFound)
+  # が出て使えない。バージョンアップ待ち
+  # https://twitter.com/witch_kazumin/status/1042273975450066945
+
+  # p "@#{target}に#{send_text}を送りました"
+  # client.create_direct_message(target, send_text)
+
+  # しかたないのでリプを送る
+  tweet(client, "@#{target} #{send_text}")
+end
+
 yuzu = Yuzu.new
 profile_text = yuzu.user_profile(client)
 p profile_text
 last_logout_time = get_last_logout_time(client, yuzu).getutc
-
-login_message = yuzu.login_message
-client.update(login_message)
-p login_message
-client.update_profile({
-  name: yuzu.user_name_actived,
-  location: yuzu.login_status_message,
-  profile_link_color: yuzu.user_profile_link_color_actived
-})
-
-interval = (60 * 15 / 75) + 1
 prev_check_time = last_logout_time
 
+# 15分に75回までの制約あり。余裕を持って+1秒してる
+# https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline.html
+interval = (60 * 15 / 75) + 1
+
 begin
+  tweet(client, yuzu.login_message)
+  client.update_profile(yuzu.profile_actived)
+
+  p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
+
   while true
-    p "さってと… #{(prev_check_time + 60 * 60 * 9).to_s.gsub(" UTC", "")} からの新しいリプライなにか飛んで来てないかな〜？"
 
     tweets = get_new_mention_timeline(client, prev_check_time)
     prev_check_time = Time.now.getutc
@@ -52,16 +79,19 @@ begin
       client.update(message, options)
     end
 
-    p "#{interval}秒後にまたチェックするよー"
+    # p "#{interval}秒後にまたチェックするよー"
     sleep(interval)
   end
+rescue Twitter::Error::TooManyRequests => e
+  tweet(client, "むぅ、電池が切れそう…#{utc_to_jst_message(e.rate_limit.reset_at)}までおやすみするねー")
+  client.update_profile(yuzu.profile_sleeped)
+  sleep(e.rate_limit.reset_in)
+  retry
+rescue => e
+  send_dm_to_master(client, "エラーだよ！#{e.inspect}")
+  tweet(client, yuzu.error_message)
+rescue Interrupt => e
+  tweet(client, yuzu.logout_message)
 ensure
-  logout_message = yuzu.logout_message
-  client.update(logout_message)
-  p logout_message
-  client.update_profile({
-    name: yuzu.user_name_sleeped,
-    location: yuzu.logout_status_message,
-    profile_link_color: yuzu.user_profile_link_color_sleeped
-  })
+  client.update_profile(yuzu.profile_sleeped)
 end
