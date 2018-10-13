@@ -64,7 +64,8 @@ rescue Twitter::Error::TooManyRequests => e
   sleep(e.rate_limit.reset_in)
   client.update_profile(yuzu.profile_actived)
   retry
-ensure
+rescue => e
   tweet(client, yuzu.logout_message)
+ensure
   client.update_profile(profile_sleeped)
 end
