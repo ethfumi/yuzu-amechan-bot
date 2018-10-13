@@ -21,10 +21,6 @@ class Yuzu
     Time.now.to_s.gsub(" +0900", "")
   end
 
-  def user_screen_name
-    "yuzu_amechan"
-  end
-
   def user_name_actived
     "yuzu🍬"
   end
@@ -70,15 +66,16 @@ class Yuzu
   end
 
   def reply_message(tweet)
-    received_message = tweet.text.gsub("@#{user_screen_name}","").strip
+    received_message = tweet.text.gsub(/@\w+/,"").strip
     base_message = reply_message_from_received_message(received_message)
     formatted_message = replace_command(base_message, tweet)
     "@#{tweet.user.screen_name} #{formatted_message}"
   end
 
   def reply_message_from_received_message(received_message)
-    # 部分一致とかも入れたほうが良いかもしれない
-    return @keywords[received_message] if @keywords.key?(received_message)
+    found_key = @keywords.keys.find{|key| received_message.include? key}
+    return @keywords[found_key] if found_key
+
     @fallback_words.sample
   end
 end
