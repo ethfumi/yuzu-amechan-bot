@@ -17,6 +17,8 @@ end
 
 def get_last_logout_time(client, yuzu)
   Time.parse(client.user.location.split(yuzu.logout_status_separator)[1])
+rescue
+  Time.now
 end
 
 def utc_to_jst_message(time)
