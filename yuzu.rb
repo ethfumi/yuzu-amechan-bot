@@ -45,8 +45,12 @@ class Yuzu
     "おっまたせ〜！✌(#{current_jst_time})"
   end
 
-  def logout_message
+  def error_message
     "しょぼ〜ん💔(#{current_jst_time})"
+  end
+
+  def logout_message
+    "まったね〜。ばいばーい🍭(#{current_jst_time})"
   end
 
   def logout_status_separator

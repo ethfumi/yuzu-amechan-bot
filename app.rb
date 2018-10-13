@@ -36,14 +36,14 @@ p profile_text
 last_logout_time = get_last_logout_time(client, yuzu).getutc
 prev_check_time = last_logout_time
 
-tweet(client, yuzu.login_message)
-client.update_profile(yuzu.profile_actived)
-
 # 15分に75回までの制約あり。余裕を持って+1秒してる
 # https://developer.twitter.com/en/docs/tweets/timelines/api-reference/get-statuses-mentions_timeline.html
 interval = (60 * 15 / 75) + 1
 
 begin
+  tweet(client, yuzu.login_message)
+  client.update_profile(yuzu.profile_actived)
+
   while true
     p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
 
@@ -62,12 +62,13 @@ begin
   end
 rescue Twitter::Error::TooManyRequests => e
   tweet(client, "むぅ、電池が切れそう…#{utc_to_jst_message(e.rate_limit.reset_at)}までおやすみするねー")
-  client.update_profile(profile_sleeped)
+  client.update_profile(yuzu.profile_sleeped)
   sleep(e.rate_limit.reset_in)
-  client.update_profile(yuzu.profile_actived)
   retry
 rescue => e
+  tweet(client, yuzu.error_message)
+rescue Interrupt => e
   tweet(client, yuzu.logout_message)
 ensure
-  client.update_profile(profile_sleeped)
+  client.update_profile(yuzu.profile_sleeped)
 end
