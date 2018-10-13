@@ -65,8 +65,9 @@ begin
   tweet(client, yuzu.login_message)
   client.update_profile(yuzu.profile_actived)
 
+  p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
+
   while true
-    p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
 
     tweets = get_new_mention_timeline(client, prev_check_time)
     prev_check_time = Time.now.getutc
@@ -78,7 +79,7 @@ begin
       client.update(message, options)
     end
 
-    p "#{interval}秒後にまたチェックするよー"
+    # p "#{interval}秒後にまたチェックするよー"
     sleep(interval)
   end
 rescue Twitter::Error::TooManyRequests => e
