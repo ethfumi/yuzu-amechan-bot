@@ -30,6 +30,27 @@ def tweet(client, message)
   p message
 end
 
+def send_dm_to_master(client, message)
+  send_dm(client, ENV['MASTER_SCREEN_NAME'], message)
+end
+
+def send_dm_self(client, message)
+  send_dm(client, client.user.screen_name, message)
+end
+
+def send_dm(client, target, message)
+  send_text = "#{message} #{utc_to_jst_message(Time.now.getutc)}"
+  # twitter-6.2.0/lib/twitter/rest/request.rb:81:in `fail_or_return_response_body': Sorry, that page does not exist. (Twitter::Error::NotFound)
+  # が出て使えない。バージョンアップ待ち
+  # https://twitter.com/witch_kazumin/status/1042273975450066945
+
+  # p "@#{target}に#{send_text}を送りました"
+  # client.create_direct_message(target, send_text)
+
+  # しかたないのでリプを送る
+  tweet(client, "@#{target} #{send_text}")
+end
+
 yuzu = Yuzu.new
 profile_text = yuzu.user_profile(client)
 p profile_text
@@ -66,6 +87,7 @@ rescue Twitter::Error::TooManyRequests => e
   sleep(e.rate_limit.reset_in)
   retry
 rescue => e
+  send_dm_to_master(client, "エラーだよ！#{e.inspect}")
   tweet(client, yuzu.error_message)
 rescue Interrupt => e
   tweet(client, yuzu.logout_message)
