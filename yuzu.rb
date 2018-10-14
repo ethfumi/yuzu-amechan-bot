@@ -73,8 +73,8 @@ class Yuzu
   end
 
   def reply_message_from_received_message(received_message)
-    found_key = @keywords.keys.find{|key| received_message.include? key}
     return @keywords[found_key] if found_key
+    found_key = @keywords.keys.find{|key| /#{key}/ === received_message }
 
     @fallback_words.sample
   end
