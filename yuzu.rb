@@ -4,8 +4,8 @@ class Yuzu
     @keywords = {}
     File.open("yuzu_keywords.txt", 'r') do |f|
       f.each_line do |line|
-        s = line.split(",")
-        @keywords[s[0]] = s[1].chomp
+        s = line.split(",", 2)
+        @keywords[s[0]] = s[1].chomp.split("\t")
       end
     end
 
@@ -73,8 +73,8 @@ class Yuzu
   end
 
   def reply_message_from_received_message(received_message)
-    return @keywords[found_key] if found_key
     found_key = @keywords.keys.find{|key| /#{key}/ === received_message }
+    return @keywords[found_key].sample if found_key
 
     @fallback_words.sample
   end
