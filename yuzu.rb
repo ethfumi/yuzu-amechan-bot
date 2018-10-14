@@ -4,6 +4,7 @@ class Yuzu
     @keywords = {}
     File.open("yuzu_keywords.txt", 'r') do |f|
       f.each_line do |line|
+        next if /^(\n|#)/ =~ line 
         s = line.split(",", 2)
         @keywords[s[0]] = s[1].chomp.split("\t")
       end
@@ -12,6 +13,7 @@ class Yuzu
     @fallback_words = []
     File.open("yuzu_fallback_words.txt", 'r') do |f|
       f.each_line do |line|
+        next if /^(\n|#)/ =~ line 
         @fallback_words << line.chomp
       end
     end
