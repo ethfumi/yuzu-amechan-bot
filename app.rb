@@ -73,6 +73,13 @@ begin
     prev_check_time = Time.now.getutc
 
     tweets.each do |t|
+      p "#{t.user.name}@#{t.user.screen_name} >> #{t.text} (#{utc_to_jst_message(t.created_at)})"
+
+      if t.text.scan(/@\w+/).size >= 2
+        p "     巻き込みリプは、しないほうがいいよね？ -> #{t.text}"
+        next
+      end
+
       options = {'in_reply_to_status_id' => t.id}
       message = yuzu.reply_message(t)
       p "<< #{message} (#{utc_to_jst_message(prev_check_time)})"
