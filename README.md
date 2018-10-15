@@ -35,3 +35,6 @@ herokuにログイン
 
 過去ログ見たい時(デフォルト100件で、1500件まで見れる)
 `heroku logs -a アプリ名(例yuzu-amechan-bot) -n 1500`
+
+タイムゾーン変更
+`heroku config:add TZ=Asia/Tokyo -a yuzu-amechan-bot`
