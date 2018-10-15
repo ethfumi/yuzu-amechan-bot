@@ -88,9 +88,15 @@ rescue Twitter::Error::TooManyRequests => e
   sleep(e.rate_limit.reset_in)
   retry
 rescue => e
-  send_dm_to_master(client, "エラーだよ！#{e.inspect}")
+  send_dm_to_master(client, "どうしよ〜システムのエラーだよ〜！ #{e.inspect}")
   tweet(client, yuzu.error_message)
 rescue Interrupt => e
+  tweet(client, yuzu.logout_message)
+rescue SystemExit => e
+  send_dm_to_master(client, "SystemExitが呼ばれたらしいよ〜！ #{e.inspect}")
+  tweet(client, yuzu.logout_message)
+rescue Exception => e
+  send_dm_to_master(client, "なにかおきたみたいーー #{e.inspect}")
   tweet(client, yuzu.logout_message)
 ensure
   client.update_profile(yuzu.profile_sleeped)
