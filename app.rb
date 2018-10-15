@@ -73,10 +73,21 @@ begin
     prev_check_time = Time.now.getutc
 
     tweets.each do |t|
+      p "#{t.user.name}@#{t.user.screen_name} >> #{t.text} (#{utc_to_jst_message(t.created_at)})"
+
+      if t.text.scan(/@\w+/).size >= 2
+        p "     巻き込みリプは、しないほうがいいよね？ -> #{t.text}"
+        next
+      end
+
       options = {'in_reply_to_status_id' => t.id}
       message = yuzu.reply_message(t)
-      p "#{t.user.name}[ID:#{t.user.screen_name}]#{t.text}(#{t.created_at})に対しての返信「#{message}」を#{prev_check_time}に行いました。"
-      client.update(message, options)
+      p "<< #{message} (#{utc_to_jst_message(prev_check_time)})"
+      begin
+        client.update(message, options)
+      rescue Twitter::Error::Unauthorized => e
+        raise "なんかしっぱいしたーーーーーーーぷんすこぴーー #{e.inspect}"
+      end
     end
 
     # p "#{interval}秒後にまたチェックするよー"
@@ -88,9 +99,15 @@ rescue Twitter::Error::TooManyRequests => e
   sleep(e.rate_limit.reset_in)
   retry
 rescue => e
-  send_dm_to_master(client, "エラーだよ！#{e.inspect}")
+  send_dm_to_master(client, "どうしよ〜システムのエラーだよ〜！ #{e.inspect}")
   tweet(client, yuzu.error_message)
 rescue Interrupt => e
+  tweet(client, yuzu.logout_message)
+rescue SystemExit => e
+  send_dm_to_master(client, "SystemExitが呼ばれたらしいよ〜！ #{e.inspect}")
+  tweet(client, yuzu.logout_message)
+rescue Exception => e
+  send_dm_to_master(client, "なにかおきたみたいーー #{e.inspect}")
   tweet(client, yuzu.logout_message)
 ensure
   client.update_profile(yuzu.profile_sleeped)
