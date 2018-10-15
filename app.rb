@@ -75,8 +75,12 @@ begin
     tweets.each do |t|
       options = {'in_reply_to_status_id' => t.id}
       message = yuzu.reply_message(t)
-      p "#{t.user.name}[ID:#{t.user.screen_name}]#{t.text}(#{t.created_at})に対しての返信「#{message}」を#{prev_check_time}に行いました。"
-      client.update(message, options)
+      p "<< #{message} (#{utc_to_jst_message(prev_check_time)})"
+      begin
+        client.update(message, options)
+      rescue Twitter::Error::Unauthorized => e
+        raise "なんかしっぱいしたーーーーーーーぷんすこぴーー #{e.inspect}"
+      end
     end
 
     # p "#{interval}秒後にまたチェックするよー"
