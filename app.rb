@@ -68,9 +68,7 @@ begin
   p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
 
   while true
-
     tweets = get_new_mention_timeline(client, prev_check_time)
-    prev_check_time = Time.now.getutc
 
     tweets.each do |t|
       p "#{t.user.name}@#{t.user.screen_name} >> #{t.text} (#{utc_to_jst_message(t.created_at)})"
@@ -83,13 +81,10 @@ begin
       options = {'in_reply_to_status_id' => t.id}
       message = yuzu.reply_message(t)
       p "<< #{message} (#{utc_to_jst_message(prev_check_time)})"
-      begin
-        client.update(message, options)
-      rescue Twitter::Error::Unauthorized => e
-        raise "なんかしっぱいしたーーーーーーーぷんすこぴーー #{e.inspect}"
-      end
+      client.update(message, options)
     end
 
+    prev_check_time = Time.now.getutc
     # p "#{interval}秒後にまたチェックするよー"
     sleep(interval)
   end
@@ -97,6 +92,11 @@ rescue Twitter::Error::TooManyRequests => e
   tweet(client, "むぅ、電池が切れそう…#{utc_to_jst_message(e.rate_limit.reset_at)}までおやすみするねー")
   client.update_profile(yuzu.profile_sleeped)
   sleep(e.rate_limit.reset_in)
+  retry
+rescue Twitter::Error::Unauthorized => e
+  p "なんかつぶやきにしっぱいしたーーーーーーー;; ぷんすこぴーー 1分後に再度チャレンジするねー #{e.inspect}"
+  client.update_profile(yuzu.profile_sleeped)
+  sleep 60
   retry
 rescue => e
   send_dm_to_master(client, "どうしよ〜システムのエラーだよ〜！ #{e.inspect}")
