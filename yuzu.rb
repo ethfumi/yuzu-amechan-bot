@@ -39,6 +39,14 @@ class Yuzu
     }
   end
 
+  def set_maintenance_status
+    @maintenance = true
+  end
+
+  def maintenance_mark
+    "💓"
+  end
+
   def user_profile(client)
     "@#{client.user.screen_name}こと#{client.user.name}登場! #{client.user.description} さっきまでは、#{client.user.location}"
   end
@@ -60,7 +68,7 @@ class Yuzu
   end
 
   def logout_status_message
-    "お布団の中#{logout_status_separator}(#{current_jst_time})"
+    "お布団の中#{logout_status_separator}(#{current_jst_time})#{@maintenance ? maintenance_mark : ""}"
   end
 
   def replace_command(message, tweet)

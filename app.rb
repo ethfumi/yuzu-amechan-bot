@@ -21,13 +21,26 @@ rescue
   Time.now
 end
 
+def last_state_maintenance?(client, yuzu)
+  client.user.location.end_with?(yuzu.maintenance_mark)
+end
+
 def utc_to_jst_message(time)
   (time + 60 * 60 * 9).to_s.gsub(" UTC", "")
 end
 
+def dryrun?
+  ENV['DRYRUN'] ? true : false
+end
+
 def tweet(client, message)
-  client.update(message)
+  client.update(message) unless dryrun?
   p message
+end
+
+def update_profile(client, profile)
+  client.update_profile(profile) unless dryrun?
+  p "profileを更新したよ. dryrun:#{dryrun?} #{profile}"
 end
 
 def send_dm_to_master(client, message)
@@ -62,15 +75,13 @@ prev_check_time = last_logout_time
 interval = (60 * 15 / 75) + 1
 
 begin
-  tweet(client, yuzu.login_message)
-  client.update_profile(yuzu.profile_actived)
+  tweet(client, yuzu.login_message) if last_state_maintenance?(client, yuzu)
+  update_profile(client, yuzu.profile_actived)
 
   p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
 
   while true
-
     tweets = get_new_mention_timeline(client, prev_check_time)
-    prev_check_time = Time.now.getutc
 
     tweets.each do |t|
       p "#{t.user.name}@#{t.user.screen_name} >> #{t.text} (#{utc_to_jst_message(t.created_at)})"
@@ -83,32 +94,38 @@ begin
       options = {'in_reply_to_status_id' => t.id}
       message = yuzu.reply_message(t)
       p "<< #{message} (#{utc_to_jst_message(prev_check_time)})"
-      begin
-        client.update(message, options)
-      rescue Twitter::Error::Unauthorized => e
-        raise "なんかしっぱいしたーーーーーーーぷんすこぴーー #{e.inspect}"
-      end
+      client.update(message, options)
     end
 
+    prev_check_time = Time.now.getutc
     # p "#{interval}秒後にまたチェックするよー"
     sleep(interval)
   end
 rescue Twitter::Error::TooManyRequests => e
   tweet(client, "むぅ、電池が切れそう…#{utc_to_jst_message(e.rate_limit.reset_at)}までおやすみするねー")
-  client.update_profile(yuzu.profile_sleeped)
+  update_profile(client, yuzu.profile_sleeped)
   sleep(e.rate_limit.reset_in)
+  retry
+rescue Twitter::Error::Unauthorized => e
+  p "なんかつぶやきにしっぱいしたーーーーーーー;; ぷんすこぴーー 1分後に再度チャレンジするねー #{e.inspect}"
+  update_profile(client, yuzu.profile_sleeped)
+  sleep 60
   retry
 rescue => e
   send_dm_to_master(client, "どうしよ〜システムのエラーだよ〜！ #{e.inspect}")
   tweet(client, yuzu.error_message)
-rescue Interrupt => e
-  tweet(client, yuzu.logout_message)
 rescue SystemExit => e
   send_dm_to_master(client, "SystemExitが呼ばれたらしいよ〜！ #{e.inspect}")
   tweet(client, yuzu.logout_message)
+rescue Interrupt => e
+  p "強制終了命令だよ！ #{e.inspect}"
+  yuzu.set_maintenance_status
+rescue SignalException => e
+  p "メンテナンスに入るよー #{e.inspect}"
+  yuzu.set_maintenance_status
 rescue Exception => e
   send_dm_to_master(client, "なにかおきたみたいーー #{e.inspect}")
   tweet(client, yuzu.logout_message)
 ensure
-  client.update_profile(yuzu.profile_sleeped)
+  update_profile(client, yuzu.profile_sleeped)
 end
