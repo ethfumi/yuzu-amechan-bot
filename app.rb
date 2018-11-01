@@ -35,7 +35,18 @@ end
 
 def tweet(client, message)
   client.update(message) unless dryrun?
-  p message
+  p "#{message}"
+end
+
+def reply_tweet(client, message, tweet)
+  options = {'in_reply_to_status_id' => tweet.id}
+  client.update(message, options) unless dryrun?
+  p "<< #{message}"
+end
+
+def fav(client, tweet)
+  client.favorite(tweet.id) unless dryrun?
+  p "[#{tweet.id}][#{tweet.user.name}さん]#{tweet.text}をfavりました♥"
 end
 
 def update_profile(client, profile)
@@ -91,10 +102,11 @@ begin
         next
       end
 
-      options = {'in_reply_to_status_id' => t.id}
       message = yuzu.reply_message(t)
-      p "<< #{message} (#{utc_to_jst_message(prev_check_time)})"
-      client.update(message, options)
+      reply_tweet(client, message, t)
+
+      # リプを返したら、印として元ツイートにfavつける(ゆくゆくは重複反応防止とかに使えるかな…？とか考えてる)
+      fav(client, t)
     end
 
     prev_check_time = Time.now.getutc
