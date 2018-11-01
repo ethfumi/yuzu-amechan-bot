@@ -25,9 +25,18 @@ def utc_to_jst_message(time)
   (time + 60 * 60 * 9).to_s.gsub(" UTC", "")
 end
 
+def dryrun?
+  ENV['DRYRUN'] ? true : false
+end
+
 def tweet(client, message)
-  client.update(message)
+  client.update(message) unless dryrun?
   p message
+end
+
+def update_profile(client, profile)
+  client.update_profile(profile) unless dryrun?
+  p "profileを更新したよ. dryrun:#{dryrun?} #{profile}"
 end
 
 def send_dm_to_master(client, message)
@@ -63,7 +72,7 @@ interval = (60 * 15 / 75) + 1
 
 begin
   tweet(client, yuzu.login_message)
-  client.update_profile(yuzu.profile_actived)
+  update_profile(client, yuzu.profile_actived)
 
   p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
 
@@ -90,12 +99,12 @@ begin
   end
 rescue Twitter::Error::TooManyRequests => e
   tweet(client, "むぅ、電池が切れそう…#{utc_to_jst_message(e.rate_limit.reset_at)}までおやすみするねー")
-  client.update_profile(yuzu.profile_sleeped)
+  update_profile(client, yuzu.profile_sleeped)
   sleep(e.rate_limit.reset_in)
   retry
 rescue Twitter::Error::Unauthorized => e
   p "なんかつぶやきにしっぱいしたーーーーーーー;; ぷんすこぴーー 1分後に再度チャレンジするねー #{e.inspect}"
-  client.update_profile(yuzu.profile_sleeped)
+  update_profile(client, yuzu.profile_sleeped)
   sleep 60
   retry
 rescue => e
@@ -110,5 +119,5 @@ rescue Exception => e
   send_dm_to_master(client, "なにかおきたみたいーー #{e.inspect}")
   tweet(client, yuzu.logout_message)
 ensure
-  client.update_profile(yuzu.profile_sleeped)
+  update_profile(client, yuzu.profile_sleeped)
 end
