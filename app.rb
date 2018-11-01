@@ -30,7 +30,7 @@ def utc_to_jst_message(time)
 end
 
 def dryrun?
-  ENV['DRYRUN'] ? true : false
+  ENV['DRYRUN'] == "true" ? true : false
 end
 
 def tweet(client, message)
