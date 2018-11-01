@@ -75,7 +75,7 @@ prev_check_time = last_logout_time
 interval = (60 * 15 / 75) + 1
 
 begin
-  tweet(client, yuzu.login_message) if last_state_maintenance?(client, yuzu)
+  tweet(client, yuzu.login_message) if !last_state_maintenance?(client, yuzu)
   update_profile(client, yuzu.profile_actived)
 
   p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
