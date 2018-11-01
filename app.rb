@@ -21,6 +21,10 @@ rescue
   Time.now
 end
 
+def last_state_maintenance?(client, yuzu)
+  client.user.location.end_with?(yuzu.maintenance_mark)
+end
+
 def utc_to_jst_message(time)
   (time + 60 * 60 * 9).to_s.gsub(" UTC", "")
 end
@@ -71,7 +75,7 @@ prev_check_time = last_logout_time
 interval = (60 * 15 / 75) + 1
 
 begin
-  tweet(client, yuzu.login_message)
+  tweet(client, yuzu.login_message) if last_state_maintenance?(client, yuzu)
   update_profile(client, yuzu.profile_actived)
 
   p "さってと… #{utc_to_jst_message(prev_check_time)} からの新しいリプライなにか飛んで来てないかな〜？"
@@ -110,11 +114,15 @@ rescue Twitter::Error::Unauthorized => e
 rescue => e
   send_dm_to_master(client, "どうしよ〜システムのエラーだよ〜！ #{e.inspect}")
   tweet(client, yuzu.error_message)
-rescue Interrupt => e
-  tweet(client, yuzu.logout_message)
 rescue SystemExit => e
   send_dm_to_master(client, "SystemExitが呼ばれたらしいよ〜！ #{e.inspect}")
   tweet(client, yuzu.logout_message)
+rescue Interrupt => e
+  p "強制終了命令だよ！ #{e.inspect}"
+  yuzu.set_maintenance_status
+rescue SignalException => e
+  p "メンテナンスに入るよー #{e.inspect}"
+  yuzu.set_maintenance_status
 rescue Exception => e
   send_dm_to_master(client, "なにかおきたみたいーー #{e.inspect}")
   tweet(client, yuzu.logout_message)
